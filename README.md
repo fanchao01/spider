@@ -1,7 +1,7 @@
 Spider
 ====
 
-Spider is a simple web crawler spider. I write it for fun.
+Spider is a simple web crawler spider. I wrote it for fun.
 
 How to use?
 ====
