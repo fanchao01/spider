@@ -1,15 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
-################################################################################
-#
-# Copyright (c) 2014 Baidu.com, Inc. All Rights Reserved
-#
-################################################################################
 """
 spider module tests
-
-Authors: fanchao(fanchao@baidu.com)
-Date:    2014/10/28 17:23:06
 """
 import unittest
 
