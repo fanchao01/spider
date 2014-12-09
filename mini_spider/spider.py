@@ -25,15 +25,16 @@ class Spider(object):
     """spider worker, each spider has one thread
     
     Args:
-        url_cache, the isntance of UrlQueue to cache the <url, level>
+        url_cache, the instance of UrlQueue to cache the <url, level>
         html_saver, the instance of HtmlSaver to save the html
         target_url_regx, the target urls in regular express
     """
 
     def __init__(self, url_cache, html_saver, target_url_regx):
         self.url_cache = url_cache
-        self.url_re = re.compile(target_url_regx)
         self.html_saver = html_saver
+        self.url_re = re.compile(target_url_regx)
+
         self.html_parser = UrlHtmlParser()
         self._stopped = False
 
@@ -59,7 +60,7 @@ class Spider(object):
             logging.info('get no url')
 
     def download(self, url):
-        """ininer method to download the url
+        """inner method to download the url
         """
 
         html = None
@@ -67,21 +68,23 @@ class Spider(object):
             # ignore the redirect url case
             request = urllib2.urlopen(url, timeout=0.5)
             html = request.read()
-            if not self.url_re.match(url):
-                try:
-                    charset = request.headers.getparam('charset') or 'gbk'
-                    html = html.decode(charset)
-                except UnicodeDecodeError:
-                    html = None
-                    logging.warn('can not decode the url, throw away: %s', url)
-            else:
-                self.save(url, html)
+
+            try:
+                charset = request.headers.getparam('charset') or 'gbk'
+                html = html.decode(charset)
+            except UnicodeDecodeError:
                 html = None
+                raise
+
+            if self.url_re.match(url):
+                self.save(url, html)
 
         except urllib2.HTTPError as e:
             logging.warn('http error, code: %d, url: %s', e.code, url)
         except urllib2.URLError as e:
             logging.warn('url error, reason: %s, url: %s', e.reason, url)
+        except UnicodeDecodeError as e:
+            logging.warn('can not decode the url, throw away: %s', url)
         except Exception as e:
             logging.error('unknown error happened: %s', e)
 
@@ -98,14 +101,13 @@ class Spider(object):
             self.html_saver.put(uh)
 
     def cache(self, url, level, sub_urls):
-        if sub_urls:
-            for su in sub_urls:
-                if su.startswith('/'):
-                    if su.startswith('//'):
-                        su =  'http:' + su
-                    else:
-                        su = url + su
-                self.url_cache.put(utils.UrlLevelTuple(su, level + 1))
+        for su in sub_urls:
+            if su.startswith('/'):
+                if su.startswith('//'):
+                    su =  'http:' + su
+                else:
+                    su = url + su
+            self.url_cache.put(utils.UrlLevelTuple(su, level + 1))
 
     @classmethod
     def escape_url(cls, url):

@@ -71,14 +71,14 @@ class Scheduler(object):
         self.urls_cache = utils.UrlQueue(self.thread_num, self.max_level)
         self.saver = htmlsaver.HtmlSaver(self.output_dir)
 
-        self.workers = [self.saver, ]
+        self.workers = [ ]
 
         self._put_level_zero_urls(arg_parser.get_spider_option('url_list_files', str))
 
     def _put_level_zero_urls(self, urls_file):
         if not os.path.exists(urls_file):
             raise errors.ArgumentFileError(
-                '`file not exits: {0}'.format(urls_file))
+                'file not exits: {0}'.format(urls_file))
 
         try:
             with open(urls_file, 'r') as infile:
@@ -100,25 +100,23 @@ class Scheduler(object):
     def execute(self):
         """start all threads and run"""
 
+        self.saver.start()
+
         for worker in self.workers:
             worker.start()
 
         while self.workers:
-            # all sipder thread exits, kill htmlsaver actively
-            if len(self.workers) == 1:
-                self.saver.terminate()
-
             for worker in self.workers[:]:
                 worker.join(self.crawl_interval)
                 if not worker.is_alive():
                     self.workers.remove(worker)
                     logging.info('worker thread is removed: %d', worker.ident)
 
+        self.saver.terminate()
         logging.info('all worker thread exited, exit now')
 
     def terminate(self):
-        # html_saver should stop at last
-        for worker in reversed(self.workers):
+        for worker in self.workers:
             worker.terminate()
 
 
